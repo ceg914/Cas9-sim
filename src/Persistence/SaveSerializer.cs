@@ -49,30 +49,56 @@ public static class SaveSerializer
     {
         SaveStateDto dto = ToDto(sim);
         byte[] stateBytes = JsonSerializer.SerializeToUtf8Bytes(dto, JsonOptions);
-        string sha = Convert.ToHexString(SHA256.HashData(stateBytes)).ToLowerInvariant();
+        var header = new SaveHeader
+        {
+            SchemaVersion = SimVersion.SaveSchema,
+            SimulationVersion = SimVersion.Simulation,
+            WorldSeed = sim.World.Config.Seed.ToString(CultureInfo.InvariantCulture),
+            SavedAtUtc = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+            StateHash = StateHasher.ToHex(sim.ComputeStateHash()),
+            DisplayName = displayName.Length > 80 ? displayName.Substring(0, 80) : displayName,
+            Day = sim.Clock.Day,
+            Hour = sim.Clock.TimeOfDayHours,
+            CreatureCount = sim.CreatureCount,
+            Tick = sim.Clock.Tick,
+        };
+        return BuildFile(stateBytes, header);
+    }
 
+    /// <summary>state JSON에 머리말을 씌우고 압축한다. 체크섬은 여기서 계산한다.</summary>
+    internal static byte[] BuildFile(byte[] stateBytes, SaveHeader header, bool compress = true)
+    {
+        string sha = Convert.ToHexString(SHA256.HashData(stateBytes)).ToLowerInvariant();
         using var raw = new MemoryStream();
-        using (var gzip = new GZipStream(raw, CompressionLevel.Fastest, leaveOpen: true))
-        using (var writer = new Utf8JsonWriter(gzip))
+        Stream target = compress ? new GZipStream(raw, CompressionLevel.Fastest, leaveOpen: true) : raw;
+        using (var writer = new Utf8JsonWriter(target))
         {
             writer.WriteStartObject();
             writer.WriteString("format", Format);
-            writer.WriteNumber("schema_version", SimVersion.SaveSchema);
-            writer.WriteString("simulation_version", SimVersion.Simulation);
-            writer.WriteString("world_seed", sim.World.Config.Seed.ToString(CultureInfo.InvariantCulture));
-            writer.WriteString("saved_at_utc", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture));
-            writer.WriteString("state_hash", StateHasher.ToHex(sim.ComputeStateHash()));
+            writer.WriteNumber("schema_version", header.SchemaVersion);
+            writer.WriteString("simulation_version", header.SimulationVersion);
+            writer.WriteString("world_seed", header.WorldSeed);
+            writer.WriteString("saved_at_utc", header.SavedAtUtc);
+            writer.WriteString("state_hash", header.StateHash);
             writer.WriteString("payload_sha256", sha);
-            writer.WriteString("display_name", displayName.Length > 80 ? displayName.Substring(0, 80) : displayName);
-            writer.WriteNumber("day", sim.Clock.Day);
-            writer.WriteNumber("hour", sim.Clock.TimeOfDayHours);
-            writer.WriteNumber("creature_count", sim.CreatureCount);
-            writer.WriteNumber("tick", sim.Clock.Tick);
+            writer.WriteString("display_name", header.DisplayName);
+            writer.WriteNumber("day", header.Day);
+            writer.WriteNumber("hour", header.Hour);
+            writer.WriteNumber("creature_count", header.CreatureCount);
+            writer.WriteNumber("tick", header.Tick);
             writer.WritePropertyName("state");
             writer.WriteRawValue(stateBytes, skipInputValidation: true);
             writer.WriteEndObject();
         }
+        if (compress) target.Dispose();
         return raw.ToArray();
+    }
+
+    /// <summary>검증을 통과한 파일에서 state JSON 바이트만 꺼낸다(테스트·진단용).</summary>
+    internal static byte[]? ExtractState(byte[] fileBytes, out SaveHeader? header, out string? error)
+    {
+        header = Open(fileBytes, out ReadOnlyMemory<byte> state, out error);
+        return header == null ? null : state.ToArray();
     }
 
     private static string Hex(ulong v) => v.ToString("x16", CultureInfo.InvariantCulture);

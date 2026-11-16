@@ -1,3 +1,4 @@
+using System;
 using PaleoSphere.Core;
 using PaleoSphere.Creatures;
 using PaleoSphere.Simulation;
@@ -13,6 +14,11 @@ public static class BehaviorExecutor
     public const float ArriveDistance = 1.5f;
     public const int ForageRetargetTicks = 100;
     public const int ExploreRetargetTicks = 600;
+    public const int RelocateRetargetTicks = 900;
+
+    /// <summary>먹기 시작하는 기준: 닿는 범위의 먹이가 한 번 뜯는 양의 몇 배인지.</summary>
+    public const float GoodPatchFactor = 8f;
+    public const float StarvingEnergy = 0.25f;
 
     /// <summary>행동을 바꾸고 로그를 남긴다. 같은 행동이면 아무것도 하지 않는다.</summary>
     public static void SwitchBehavior(Creature c, BehaviorKind next, long tick)
@@ -140,33 +146,62 @@ public static class BehaviorExecutor
         }
     }
 
+    /// <summary>입이 닿는 범위(지금 셀과 둘레 여덟 셀)에서 먹을 수 있는 양(kg).</summary>
+    private static float ReachableForage(WorldState w, int cell)
+    {
+        int n = w.Terrain.Size;
+        int cx = cell % n, cz = cell / n;
+        float total = 0f;
+        for (int dz = -1; dz <= 1; dz++)
+        {
+            int z = cz + dz;
+            if (z < 0 || z >= n) continue;
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                int x = cx + dx;
+                if (x < 0 || x >= n) continue;
+                total += w.Vegetation.EdibleAt(z * n + x, w.Forage);
+            }
+        }
+        return total;
+    }
+
+    /// <summary>닿는 범위에서 wantKg까지 뜯어 먹고 실제로 먹은 양을 돌려준다. 지금 셀부터 고정된 순서로 먹는다.</summary>
+    private static float ConsumeReachable(WorldState w, int cell, float wantKg)
+    {
+        int n = w.Terrain.Size;
+        int cx = cell % n, cz = cell / n;
+        float got = w.Vegetation.Consume(cell, wantKg, w.Forage);
+        for (int dz = -1; dz <= 1 && got < wantKg; dz++)
+        {
+            int z = cz + dz;
+            if (z < 0 || z >= n) continue;
+            for (int dx = -1; dx <= 1 && got < wantKg; dx++)
+            {
+                int x = cx + dx;
+                if (x < 0 || x >= n || (dx == 0 && dz == 0)) continue;
+                got += w.Vegetation.Consume(z * n + x, wantKg - got, w.Forage);
+            }
+        }
+        return got;
+    }
+
     private static void UpdateForage(Creature c, SpeciesDefinition sp, WorldState w, int cell, float hoursDt, long tick)
     {
-        var terrain = w.Terrain;
-        var veg = w.Vegetation;
-        int n = terrain.Size;
         float want = sp.IntakeKgPerHour * hoursDt * c.TraitBodySize;
+        float reachable = ReachableForage(w, cell);
 
-        // 입이 닿는 범위: 지금 셀과 사방 이웃.
-        int cx = cell % n, cz = cell / n;
-        float reachable = veg.EdibleAt(cell, w.Forage);
-        if (cx > 0) reachable += veg.EdibleAt(cell - 1, w.Forage);
-        if (cx < n - 1) reachable += veg.EdibleAt(cell + 1, w.Forage);
-        if (cz > 0) reachable += veg.EdibleAt(cell - n, w.Forage);
-        if (cz < n - 1) reachable += veg.EdibleAt(cell + n, w.Forage);
-
-        // 먹기 시작하려면 넉넉해야 하고, 먹던 중이면 거의 바닥날 때까지 계속한다.
+        // 넉넉한 자리에서만 먹기 시작하고, 먹던 중이면 거의 바닥날 때까지 계속한다.
+        // 굶주림이 심하면 기준을 낮춰 부스러기라도 먹는다.
         bool eating = c.Activity == ActivityKind.Eat;
-        float threshold = eating ? want * 0.5f : want * 3f;
+        float goodCell = Perception.GoodCellKg(w, want);
+        float startKg = MathF.Min(want * GoodPatchFactor, goodCell * 8f);
+        if (c.Energy < StarvingEnergy) startKg = MathF.Min(startKg, want * 3f);
+        float threshold = eating ? MathF.Min(want, startKg * 0.5f) : startKg;
 
         if (reachable >= threshold && reachable > 0f)
         {
-            float got = veg.Consume(cell, want, w.Forage);
-            if (got < want && cx > 0) got += veg.Consume(cell - 1, want - got, w.Forage);
-            if (got < want && cx < n - 1) got += veg.Consume(cell + 1, want - got, w.Forage);
-            if (got < want && cz > 0) got += veg.Consume(cell - n, want - got, w.Forage);
-            if (got < want && cz < n - 1) got += veg.Consume(cell + n, want - got, w.Forage);
-
+            float got = ConsumeReachable(w, cell, want);
             c.Energy = MathUtil.Clamp01(c.Energy + got * sp.EnergyPerKg / c.TraitBodySize);
             c.BoutAmount += got;
             c.HasTarget = false;
@@ -177,18 +212,28 @@ public static class BehaviorExecutor
 
         if (!c.HasTarget || tick >= c.NextRetargetTick)
         {
-            if (Perception.FindForageTarget(c, sp, w, want * 3f, out c.Target))
+            bool found = Perception.FindForageTarget(c, sp, w, goodCell * 0.5f, out Vec2 target, out float bestEdible);
+            if (found && bestEdible >= goodCell)
             {
+                c.Target = target;
                 c.HasTarget = true;
+                c.NextRetargetTick = tick + ForageRetargetTicks;
                 ClearIssue(c);
+            }
+            else if (Perception.TryPickRelocationTarget(c, w, 60f, 140f, out c.Target))
+            {
+                // 주변이 빈약하면 부스러기를 찾아다니지 않고 멀리 옮겨 간다.
+                c.HasTarget = true;
+                c.NextRetargetTick = tick + RelocateRetargetTicks;
+                NoteIssue(c, BehaviorResult.NoFoodFound);
             }
             else
             {
-                // 보이는 먹이가 없으면 멀리 옮겨 가며 찾는다.
-                c.HasTarget = Perception.TryPickWanderTarget(c, w, 30f, 80f, out c.Target);
+                c.Target = target;
+                c.HasTarget = found;
+                c.NextRetargetTick = tick + ForageRetargetTicks;
                 NoteIssue(c, BehaviorResult.NoFoodFound);
             }
-            c.NextRetargetTick = tick + ForageRetargetTicks;
         }
         c.Activity = c.HasTarget ? ActivityKind.Walk : ActivityKind.Stand;
     }

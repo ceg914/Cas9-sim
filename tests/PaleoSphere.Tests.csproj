@@ -17,6 +17,9 @@
     <ProjectReference Include="../src/PaleoSphere.Sim.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- 테스트가 저장소의 data/ 와 세이브 샘플을 직접 읽는다. -->
     <AssemblyMetadata Include="RepoRoot" Value="$(RepoRoot)" />
   </ItemGroup>

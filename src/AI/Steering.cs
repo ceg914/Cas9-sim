@@ -59,7 +59,7 @@ public sealed class Steering
                     int cell = terrain.CellIndexAt(c.Position);
                     float terrainFactor = w.Biomes[terrain.Biome[cell]].MoveSpeedFactor;
                     speed = (c.Activity == ActivityKind.Run ? sp.RunSpeedMps : sp.WalkSpeedMps)
-                            * c.TraitSpeed * (0.6f + 0.4f * c.Health) * terrainFactor;
+                            * c.TraitSpeed * (0.6f + 0.4f * c.Health) * (1f - 0.3f * c.Fatigue) * terrainFactor;
                 }
             }
 

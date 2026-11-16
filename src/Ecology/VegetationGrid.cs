@@ -9,6 +9,9 @@ namespace PaleoSphere.Ecology;
 /// </summary>
 public sealed class VegetationGrid
 {
+    /// <summary>성장 조건(0~1)이 이 값 아래면 고사가 시작된다.</summary>
+    public const float StressThreshold = 0.35f;
+
     public int Size { get; }
     public float[] Biomass { get; }
     public float[] Capacity { get; }
@@ -20,6 +23,9 @@ public sealed class VegetationGrid
 
     /// <summary>마지막 Update에서 계산한 전체 바이오매스(kg).</summary>
     public double LastTotal { get; private set; }
+
+    /// <summary>식생이 자랄 수 있는 셀의 평균 수용량(kg). 섭식 기준을 세계의 풍요도에 맞추는 데 쓴다.</summary>
+    public float MeanLandCapacity { get; private set; }
 
     public VegetationGrid(int size)
     {
@@ -39,6 +45,16 @@ public sealed class VegetationGrid
             Capacity[i] = k;
             if (Biomass[i] > k) Biomass[i] = k;
         }
+
+        double sum = 0;
+        int land = 0;
+        for (int i = 0; i < Capacity.Length; i++)
+        {
+            if (Capacity[i] <= 0f) continue;
+            sum += Capacity[i];
+            land++;
+        }
+        MeanLandCapacity = land > 0 ? (float)(sum / land) : 0f;
     }
 
     public void InitializeBiomass(TerrainGrid terrain, WorldConfig cfg)
@@ -114,11 +130,13 @@ public sealed class VegetationGrid
                 if (growth > k - b) growth = k - b;
             }
 
-            float stress = MathF.Max(1f - m, 1f - tempFactor) - 0.5f;
+            // 고사: 수분이나 온도 조건이 최적의 35% 아래로 떨어진 만큼 비례해서 줄어든다.
+            float worst = m < tempFactor ? m : tempFactor;
             float dieback = 0f;
-            if (stress > 0f)
+            if (worst < StressThreshold)
             {
-                dieback = plant.DiebackRatePerDay * (stress * 2f) * b * daysDt;
+                float stress = (StressThreshold - worst) / StressThreshold;
+                dieback = plant.DiebackRatePerDay * stress * b * daysDt;
                 if (dieback > b) dieback = b;
             }
 

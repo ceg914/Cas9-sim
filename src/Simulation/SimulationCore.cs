@@ -254,8 +254,8 @@ public sealed class SimulationCore
             if (phase % DecisionIntervalTicks == 0)
             {
                 SenseThreats(c, w, tick);
-                float minBite = sp.IntakeKgPerHour * hoursDt * c.TraitBodySize * 3f;
-                bool foodNearby = Perception.IsFoodNearby(c, w, minBite);
+                float bite = sp.IntakeKgPerHour * hoursDt * c.TraitBodySize;
+                bool foodNearby = Perception.IsFoodNearby(c, w, Perception.GoodCellKg(w, bite) * 0.5f);
                 BehaviorKind chosen = UtilityBrain.Decide(c, w, foodNearby);
                 BehaviorExecutor.SwitchBehavior(c, chosen, tick);
             }

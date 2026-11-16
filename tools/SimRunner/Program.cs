@@ -13,7 +13,8 @@ namespace PaleoSphere.Tools;
 
 /// <summary>
 /// 사용법: dotnet run --project tools/SimRunner -c Release -- [--data data] [--scenario id] [--days N]
-///         [--count N] [--seed N] [--csv out.csv] [--quiet]
+///         [--count N] [--seed N] [--size cells] [--csv out.csv] [--save out.psave] [--quiet]
+///         [--trace-deaths] [--trace-creature id] [--trace-every ticks]
 /// </summary>
 public static class Program
 {
@@ -27,6 +28,11 @@ public static class Program
         ulong? seed = null;
         string? csv = null;
         bool quiet = false;
+        string? savePath = null;
+        int sizeOverride = -1;
+        bool traceDeaths = false;
+        int traceCreature = -1;
+        int traceEvery = 500;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -38,7 +44,12 @@ public static class Program
                 case "--count": countOverride = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--seed": seed = ulong.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--csv": csv = args[++i]; break;
+                case "--save": savePath = args[++i]; break;
+                case "--size": sizeOverride = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--quiet": quiet = true; break;
+                case "--trace-deaths": traceDeaths = true; break;
+                case "--trace-creature": traceCreature = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
+                case "--trace-every": traceEvery = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 default:
                     Console.Error.WriteLine("알 수 없는 인자: " + args[i]);
                     return 2;
@@ -61,6 +72,7 @@ public static class Program
 
         var config = scenario.World.Clone();
         if (seed.HasValue) config.Seed = seed.Value;
+        if (sizeOverride > 0) config.SizeCells = sizeOverride;
         var sw = Stopwatch.StartNew();
         SimulationCore sim = data.CreateSimulation(config);
         double genMs = sw.Elapsed.TotalMilliseconds;
@@ -73,6 +85,29 @@ public static class Program
             sim.Enqueue(new SpawnCreaturesCommand(scenario.Populations[0].SpeciesId, Math.Min(extra, 500), center, size * 0.45f));
         sim.ApplyPendingCommands();
 
+        if (traceDeaths)
+        {
+            sim.Events.Subscribe(e =>
+            {
+                if (e.Type != SimEventType.CreatureDied) return;
+                var t = sim.World.Terrain;
+                var v = sim.World.Vegetation;
+                int cell = t.CellIndexAt(e.Position);
+                int n = t.Size, cx = cell % n, cz = cell / n, r = (int)(40f / t.CellSize);
+                double b = 0, k = 0, edible = 0;
+                for (int dz = -r; dz <= r; dz++)
+                    for (int dx = -r; dx <= r; dx++)
+                    {
+                        int x = cx + dx, z = cz + dz;
+                        if (x < 0 || z < 0 || x >= n || z >= n) continue;
+                        b += v.Biomass[z * n + x];
+                        k += v.Capacity[z * n + x];
+                        edible += v.EdibleAt(z * n + x, sim.World.Forage);
+                    }
+                Console.WriteLine($"  사망 #{e.CreatureId} {e.Detail} Day {e.Day} {e.Hour:0.0}h 위치 {e.Position} 생물군계 {sim.World.Biomes[t.Biome[cell]].Id} 물까지 {t.WaterPathDistance[cell]:0} m | 반경 40 m 식생 {b:0}/{k:0} kg (먹을 수 있는 양 {edible:0} kg)");
+            });
+        }
+
         var terrain = sim.World.Terrain;
         int water = 0, walkable = 0;
         for (int i = 0; i < terrain.CellCount; i++)
@@ -84,12 +119,22 @@ public static class Program
         Console.WriteLine($"식생 수용량 {sim.World.Vegetation.SumCapacity() / 1000:0.0} t, 초기 {sim.World.Vegetation.SumBiomass() / 1000:0.0} t, 개체 {sim.CreatureCount}");
 
         long totalTicks = (long)(days * config.TicksPerDay);
-        int reportEvery = config.TicksPerDay;
+        int reportEvery = config.TicksPerDay / 2;
         sw.Restart();
         for (long t = 0; t < totalTicks; t++)
         {
             sim.Step();
             if (!quiet && sim.Clock.Tick % reportEvery == 0) PrintDay(sim);
+            if (traceCreature > 0 && sim.Clock.Tick % traceEvery == 0 && sim.TryGetCreature(traceCreature, out Creature? tc) && tc != null)
+            {
+                var tt = sim.World.Terrain;
+                int cell = tt.CellIndexAt(tc.Position);
+                Console.WriteLine(string.Format(CultureInfo.InvariantCulture,
+                    "  #{0} Day {1} {2:0.0}h pos ({3:0.000}, {4:0.000}) {5}/{6} target {7}{8} stuck {9} E {10:0.00} H {11:0.00} F {12:0.00} cell[{13}] walk {14} water {15} depth {16:0.00} wdist {17:0.0} speed {18:0.00}",
+                    tc.Id, sim.Clock.Day, sim.Clock.TimeOfDayHours, tc.Position.X, tc.Position.Z, tc.Behavior, tc.Activity,
+                    tc.HasTarget ? "→" : "x", tc.Target, tc.StuckTicks, tc.Energy, tc.Hydration, tc.Fatigue,
+                    sim.World.Biomes[tt.Biome[cell]].Id, tt.Walkable[cell], tt.IsWater(cell), tt.WaterDepth(cell), tt.WaterPathDistance[cell], tc.CurrentSpeed));
+            }
         }
         double runMs = sw.Elapsed.TotalMilliseconds;
 
@@ -101,6 +146,12 @@ public static class Program
         double expected = veg.InitialTotal + veg.TotalGrown - veg.TotalConsumed - veg.TotalDieback;
         Console.WriteLine($"    식생 {veg.SumBiomass() / 1000:0.00} t (성장 {veg.TotalGrown / 1000:0.00}, 섭식 {veg.TotalConsumed / 1000:0.00}, 고사 {veg.TotalDieback / 1000:0.00}; 수지 오차 {Math.Abs(expected - veg.SumBiomass()):0.000} kg)");
         Console.WriteLine($"    상태 해시 {StateHasher.ToHex(sim.ComputeStateHash())}");
+
+        if (savePath != null)
+        {
+            File.WriteAllBytes(savePath, PaleoSphere.Persistence.SaveSerializer.Serialize(sim, Path.GetFileNameWithoutExtension(savePath)));
+            Console.WriteLine("세이브 저장: " + savePath);
+        }
 
         if (csv != null)
         {

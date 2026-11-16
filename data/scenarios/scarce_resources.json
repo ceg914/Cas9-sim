@@ -1,8 +1,11 @@
 {
   "schema_version": 1,
   "id": "scarce_resources",
-  "name": { "ko": "자원 부족", "en": "Scarce resources" },
-  "description": "건조하고 식생 수용량이 낮은 세계. 먹이 부족이 생존에 미치는 영향을 본다.",
+  "name": {
+    "ko": "자원 부족",
+    "en": "Scarce resources"
+  },
+  "description": "건조하고 식생 수용량이 낮은 세계에 초식동물 30마리를 둔다. 먹이 부족으로 개체수가 줄어드는 과정을 본다.",
   "mode": "scientific",
   "world": {
     "seed": "20261116",
@@ -11,10 +14,10 @@
     "relief": 14,
     "water_fraction": 0.03,
     "river": false,
-    "initial_vegetation": 0.35,
-    "vegetation_capacity_scale": 0.25,
-    "vegetation_growth_scale": 0.5,
-    "moisture_bias": -0.2,
+    "initial_vegetation": 0.5,
+    "vegetation_capacity_scale": 0.6,
+    "vegetation_growth_scale": 1.0,
+    "moisture_bias": -0.1,
     "base_temperature_c": 26,
     "seasonal_amplitude_c": 5,
     "diurnal_amplitude_c": 4,
@@ -23,6 +26,9 @@
     "start_hour": 8
   },
   "populations": [
-    { "species": "triceratops_horridus", "count": 60 }
+    {
+      "species": "triceratops_horridus",
+      "count": 30
+    }
   ]
 }

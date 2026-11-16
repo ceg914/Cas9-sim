@@ -83,6 +83,24 @@ public sealed class TerrainGrid
 
     public bool IsWalkableAt(Vec2 p) => InBounds(p) && Walkable[CellIndexAt(p)];
 
+    /// <summary>
+    /// a에서 b까지 직선으로 걸어갈 수 있는지. 반 셀 간격으로 짚어 보며 물·급경사 셀이 끼어 있으면 false.
+    /// 이동이 직선 조향이라, 목표를 고를 때 이 검사로 건널 수 없는 강 건너편을 걸러 낸다.
+    /// </summary>
+    public bool IsLineWalkable(Vec2 a, Vec2 b)
+    {
+        if (!InBounds(a) || !InBounds(b)) return false;
+        Vec2 d = b - a;
+        float len = d.Length;
+        int steps = (int)(len / (CellSize * 0.5f)) + 1;
+        for (int i = 1; i <= steps; i++)
+        {
+            Vec2 p = a + d * ((float)i / steps);
+            if (!Walkable[CellIndexAt(p)]) return false;
+        }
+        return true;
+    }
+
     /// <summary>개체를 놓을 수 있는 마른 땅인지.</summary>
     public bool IsDryLandAt(Vec2 p)
     {
