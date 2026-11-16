@@ -1,0 +1,18 @@
+<Project Sdk="Godot.NET.Sdk/4.7.2">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>PaleoSphere</RootNamespace>
+    <AssemblyName>PaleoSphere</AssemblyName>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 시뮬레이션 코어(순수 C#)와 테스트는 별도 프로젝트에서 컴파일한다. -->
+    <Compile Remove="src/Core/**;src/World/**;src/Ecology/**;src/Creatures/**;src/AI/**;src/Simulation/**;src/Persistence/**;src/Modding/**;src/Diagnostics/**" />
+    <Compile Remove="tests/**;tools/**;builds/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="src/PaleoSphere.Sim.csproj" />
+  </ItemGroup>
+</Project>

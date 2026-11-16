@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "upland",
+  "name": { "ko": "건조 고지", "en": "Dry upland" },
+  "description": "물에서 멀고 높은 메마른 땅. 식생이 적다.",
+  "evidence": "simplified",
+  "vegetation_capacity_kg_m2": 0.2,
+  "growth_factor": 0.7,
+  "move_speed_factor": 0.95,
+  "color": [0.58, 0.60, 0.33],
+  "bare_color": [0.66, 0.58, 0.42]
+}

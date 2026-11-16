@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "open_plain",
+  "name": { "ko": "개활 저지대", "en": "Open lowland" },
+  "description": "양치류와 키 작은 식물이 덮은 트인 땅을 뭉뚱그린 구역. 볏과 식물이 우점하는 초원은 신생대에 퍼졌으므로 '초원'이라 부르지 않는다.",
+  "evidence": "simplified",
+  "vegetation_capacity_kg_m2": 0.5,
+  "growth_factor": 1.0,
+  "move_speed_factor": 1.0,
+  "color": [0.40, 0.57, 0.24],
+  "bare_color": [0.56, 0.48, 0.34]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "wetland",
+  "name": { "ko": "습지", "en": "Wetland" },
+  "description": "물가의 낮고 축축한 땅. 식생이 빨리 자라지만 걷기는 느리다.",
+  "evidence": "simplified",
+  "vegetation_capacity_kg_m2": 0.9,
+  "growth_factor": 1.25,
+  "move_speed_factor": 0.7,
+  "color": [0.30, 0.50, 0.33],
+  "bare_color": [0.33, 0.33, 0.26]
+}

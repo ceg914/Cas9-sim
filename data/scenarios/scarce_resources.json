@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "scarce_resources",
+  "name": { "ko": "자원 부족", "en": "Scarce resources" },
+  "description": "건조하고 식생 수용량이 낮은 세계. 먹이 부족이 생존에 미치는 영향을 본다.",
+  "mode": "scientific",
+  "world": {
+    "seed": "20261116",
+    "size_cells": 256,
+    "cell_size": 2.0,
+    "relief": 14,
+    "water_fraction": 0.03,
+    "river": false,
+    "initial_vegetation": 0.35,
+    "vegetation_capacity_scale": 0.25,
+    "vegetation_growth_scale": 0.5,
+    "moisture_bias": -0.2,
+    "base_temperature_c": 26,
+    "seasonal_amplitude_c": 5,
+    "diurnal_amplitude_c": 4,
+    "ticks_per_day": 6000,
+    "days_per_season": 10,
+    "start_hour": 8
+  },
+  "populations": [
+    { "species": "triceratops_horridus", "count": 60 }
+  ]
+}

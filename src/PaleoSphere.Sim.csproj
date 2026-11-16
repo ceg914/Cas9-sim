@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Godot에 의존하지 않는 시뮬레이션 코어. 화면 없이 dotnet test로 검증한다. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>PaleoSphere</RootNamespace>
+    <AssemblyName>PaleoSphere.Sim</AssemblyName>
+    <Nullable>enable</Nullable>
+    <LangVersion>12.0</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Configurations>Debug;Release;ExportDebug;ExportRelease</Configurations>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'ExportRelease' Or '$(Configuration)' == 'Release' ">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Core/**/*.cs;World/**/*.cs;Ecology/**/*.cs;Creatures/**/*.cs;AI/**/*.cs;Simulation/**/*.cs;Persistence/**/*.cs;Modding/**/*.cs;Diagnostics/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PaleoSphere.Tests" />
+  </ItemGroup>
+</Project>

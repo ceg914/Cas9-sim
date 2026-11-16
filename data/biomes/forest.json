@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "forest",
+  "name": { "ko": "삼림", "en": "Forest" },
+  "description": "나무가 우거진 구역. 수용량은 초식동물 입이 닿는 높이의 식생만 센 값이다.",
+  "evidence": "simplified",
+  "vegetation_capacity_kg_m2": 0.75,
+  "growth_factor": 0.85,
+  "move_speed_factor": 0.85,
+  "color": [0.17, 0.40, 0.19],
+  "bare_color": [0.36, 0.31, 0.22]
+}

@@ -1,0 +1,8 @@
+<Project>
+  <!-- obj/bin을 저장소 루트의 .build/ 아래로 모은다. Godot 프로젝트의 기본 glob에 섞이지 않게 하기 위함. -->
+  <PropertyGroup>
+    <RepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..'))</RepoRoot>
+    <BaseIntermediateOutputPath>$(RepoRoot).build/obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(RepoRoot).build/bin/$(MSBuildProjectName)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

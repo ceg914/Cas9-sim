@@ -1,0 +1,106 @@
+using PaleoSphere.Creatures;
+using PaleoSphere.Simulation;
+
+namespace PaleoSphere.AI;
+
+/// <summary>
+/// 유틸리티 AI. 행동마다 점수를 계산해 가장 높은 것을 고르고, 점수와 이유를 개체에 남긴다.
+/// 생존에 직결되는 조건은 점수와 별개인 안전 규칙으로 먼저 처리한다.
+/// 점수 곡선과 임계값은 모두 게임적 단순화다(docs/SIMULATION_SPEC.md 참고).
+/// </summary>
+public static class UtilityBrain
+{
+    public const float SafetyFear = 0.75f;
+    public const float SafetyHydration = 0.12f;
+    public const float SafetyEnergy = 0.10f;
+
+    // 하던 행동을 마칠 때까지 유지하는 기준(잦은 전환 방지).
+    public const float ForageSatedEnergy = 0.92f;
+    public const float DrinkSatedHydration = 0.92f;
+    public const float RestedFatigue = 0.12f;
+
+    // 동점일 때의 우선순위.
+    private static readonly BehaviorKind[] Order =
+    {
+        BehaviorKind.Flee, BehaviorKind.Drink, BehaviorKind.Forage, BehaviorKind.Rest, BehaviorKind.Explore, BehaviorKind.Idle,
+    };
+
+    /// <summary>c.LastScores, c.LastReason, c.LastDecisionTick을 채우고 고른 행동을 돌려준다.</summary>
+    public static BehaviorKind Decide(Creature c, WorldState w, bool foodNearby)
+    {
+        var terrain = w.Terrain;
+        int cell = terrain.CellIndexAt(c.Position);
+        bool waterReachable = !float.IsPositiveInfinity(terrain.WaterPathDistance[cell]);
+        bool threatActive = c.ThreatUntilTick >= w.Clock.Tick && c.Fear > 0.05f;
+        bool night = w.Env.IsNight;
+
+        float hunger = 1f - c.Energy;
+        float thirst = 1f - c.Hydration;
+        float fatigue = c.Fatigue;
+
+        float[] s = c.LastScores;
+        s[(int)BehaviorKind.Idle] = 0.10f;
+
+        s[(int)BehaviorKind.Forage] = (0.6f * hunger + 0.6f * hunger * hunger) * (foodNearby ? 1f : 0.75f)
+            + (c.Behavior == BehaviorKind.Forage && c.Energy < ForageSatedEnergy ? 0.20f : 0f);
+
+        s[(int)BehaviorKind.Drink] = waterReachable
+            ? 0.5f * thirst + 0.9f * thirst * thirst
+              + (c.Behavior == BehaviorKind.Drink && c.Hydration < DrinkSatedHydration ? 0.25f : 0f)
+            : 0f;
+
+        s[(int)BehaviorKind.Rest] = terrain.IsWater(cell)
+            ? 0f
+            : 0.9f * fatigue * fatigue + (night ? 0.35f * (0.4f + fatigue) : 0f)
+              + (c.Behavior == BehaviorKind.Rest && fatigue > RestedFatigue ? 0.25f : 0f);
+
+        s[(int)BehaviorKind.Flee] = threatActive ? 2f * c.Fear : 0f;
+
+        s[(int)BehaviorKind.Explore] = (0.12f + 0.08f * c.Energy * c.Hydration) * (night ? 0.5f : 1f);
+
+        c.LastDecisionTick = w.Clock.Tick;
+
+        if (threatActive && c.Fear >= SafetyFear)
+        {
+            c.LastReason = DecisionReason.SafetyThreat;
+            return BehaviorKind.Flee;
+        }
+        if (c.Hydration <= SafetyHydration && waterReachable)
+        {
+            c.LastReason = DecisionReason.SafetyDehydration;
+            return BehaviorKind.Drink;
+        }
+        if (c.Energy <= SafetyEnergy)
+        {
+            c.LastReason = DecisionReason.SafetyStarvation;
+            return BehaviorKind.Forage;
+        }
+
+        BehaviorKind best = BehaviorKind.Idle;
+        float bestScore = float.NegativeInfinity;
+        foreach (BehaviorKind b in Order)
+        {
+            float score = s[(int)b];
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = b;
+            }
+        }
+        c.LastReason = DecisionReason.HighestScore;
+        return best;
+    }
+
+    /// <summary>행동을 바꾸는 시점에 이전 행동이 목적을 달성했는지.</summary>
+    public static bool IsCompleted(Creature c)
+    {
+        return c.Behavior switch
+        {
+            BehaviorKind.Forage => c.Energy >= ForageSatedEnergy - 0.04f,
+            BehaviorKind.Drink => c.Hydration >= DrinkSatedHydration - 0.04f,
+            BehaviorKind.Rest => c.Fatigue <= RestedFatigue + 0.03f,
+            BehaviorKind.Flee => c.Fear < 0.2f,
+            _ => true,
+        };
+    }
+}

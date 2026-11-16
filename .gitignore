@@ -1,0 +1,23 @@
+# Godot
+.godot/
+*.translation
+export_credentials.cfg
+
+# .NET
+.build/
+bin/
+obj/
+*.user
+.vs/
+.idea/
+TestResults/
+
+# 빌드 산출물 (builds/README.md만 추적)
+builds/*
+!builds/README.md
+
+# 임시 파일
+*.tmp
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "water",
+  "name": { "ko": "하천·호수", "en": "River and lake" },
+  "description": "수면 아래 구역. 수심 0.7 m까지는 걸어서 건널 수 있다고 가정한다.",
+  "evidence": "simplified",
+  "vegetation_capacity_kg_m2": 0.0,
+  "growth_factor": 0.0,
+  "move_speed_factor": 0.55,
+  "color": [0.20, 0.38, 0.45],
+  "bare_color": [0.42, 0.40, 0.32]
+}

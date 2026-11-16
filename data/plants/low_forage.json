@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "low_forage",
+  "name": { "ko": "저층 먹이 식생", "en": "Low forage" },
+  "description": "초식동물이 뜯어 먹는 낮은 식생 전체를 한 층으로 뭉뚱그린 자원. 특정 식물 분류군을 나타내지 않는다.",
+  "evidence": "simplified",
+  "growth_rate_per_day": 1.2,
+  "seed_fraction": 0.02,
+  "dieback_rate_per_day": 0.25,
+  "residual_fraction": 0.08,
+  "min_moisture": 0.12,
+  "optimal_moisture": 0.6,
+  "min_temperature_c": 4,
+  "optimal_low_c": 16,
+  "optimal_high_c": 30,
+  "max_temperature_c": 42
+}
