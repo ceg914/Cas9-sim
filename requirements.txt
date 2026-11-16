@@ -1,0 +1,15 @@
+# CRISPR Studio 실행 의존성
+# Python 3.10+ 권장
+
+PySide6>=6.6
+pyvista>=0.43
+pyvistaqt>=0.11
+vtk>=9.2
+biopython>=1.83
+numpy>=1.24
+
+# 개발/테스트
+pytest>=7.0
+
+# 배포(선택)
+# pyinstaller>=6.0
