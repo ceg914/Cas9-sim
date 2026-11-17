@@ -73,7 +73,6 @@ public sealed class SimulationCore
 
         var sim = new SimulationCore(new WorldState(config, clock, terrain, vegetation, biomes, species, forage));
         sim.Publish(SimEventType.WorldCreated, -1, "", "", Vec2.Zero);
-        sim.Stats.Sample(0, 0f, sim._creatures, vegetation.LastTotal);
         return sim;
     }
 
@@ -230,6 +229,9 @@ public sealed class SimulationCore
         WorldState w = World;
         SimClock clock = w.Clock;
         long tick = clock.Tick;
+        // 첫 표본은 초기 배치가 끝난 뒤의 상태로 남긴다.
+        if (Stats.Samples.Count == 0)
+            Stats.Sample(tick, (float)clock.ElapsedDays, _creatures, w.Vegetation.LastTotal);
         w.Env = EnvironmentState.Compute(clock, w.Config);
 
         for (int i = w.Threats.Count - 1; i >= 0; i--)

@@ -78,7 +78,7 @@ public partial class WorldView : Node3D
             AmbientLightSource = Godot.Environment.AmbientSource.Sky,
             TonemapMode = Godot.Environment.ToneMapper.Filmic,
             FogEnabled = true,
-            FogDensity = 0.0009f,
+            FogDensity = 0.00035f,
             FogLightColor = new Color(0.70f, 0.78f, 0.84f),
         };
         _worldEnv = new WorldEnvironment { Environment = _env };
@@ -247,13 +247,14 @@ public partial class WorldView : Node3D
         float azimuth = day ? Mathf.Cos(sunAngle) : 0.3f;
         var toSun = new Vector3(azimuth, elevation, 0.35f).Normalized();
         _sun.LookAtFromPosition(toSun * 100f, Vector3.Zero, Vector3.Up);
-        _sun.LightEnergy = day ? 0.25f + 1.15f * light : 0.10f;
+        _sun.LightEnergy = day ? 0.25f + 1.15f * light : 0.22f;
         _sun.LightColor = day
             ? new Color(1f, 0.90f + 0.08f * light, 0.76f + 0.2f * light)
             : new Color(0.55f, 0.65f, 0.95f);
-        float sky = 0.10f + 0.90f * light;
+        // 밤에도 개체를 알아볼 수 있을 만큼은 밝게 둔다.
+        float sky = 0.16f + 0.84f * light;
         _env.BackgroundEnergyMultiplier = sky;
-        _env.AmbientLightEnergy = 0.25f + 0.75f * light;
+        _env.AmbientLightEnergy = 0.45f + 0.55f * light;
         _env.FogLightEnergy = sky;
     }
 }

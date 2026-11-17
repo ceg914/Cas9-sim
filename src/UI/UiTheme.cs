@@ -90,6 +90,15 @@ public static class UiTheme
         return label;
     }
 
+    /// <summary>줄바꿈 없는 작은 보조 문구(표의 숫자 칸 등).</summary>
+    public static Label SmallLabel(string text = "")
+    {
+        var label = new Label { Text = text };
+        label.AddThemeColorOverride("font_color", Muted);
+        label.AddThemeFontSizeOverride("font_size", 13);
+        return label;
+    }
+
     public static Label MutedLabel(string text = "")
     {
         var label = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart };

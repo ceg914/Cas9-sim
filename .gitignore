@@ -14,6 +14,7 @@ TestResults/
 
 # 빌드 산출물 (builds/README.md만 추적)
 builds/*
+!builds/.gdignore
 !builds/README.md
 
 # 임시 파일

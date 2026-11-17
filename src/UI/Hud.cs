@@ -90,11 +90,12 @@ public partial class Hud : Control
 
     public override void _Ready()
     {
-        SetAnchorsPreset(LayoutPreset.FullRect);
+        // 앵커만 바꾸면 현재 크기가 유지되므로 오프셋까지 0으로 맞춰 화면을 꽉 채운다.
+        SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Ignore;
 
         var root = new VBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-        root.SetAnchorsPreset(LayoutPreset.FullRect);
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         root.AddThemeConstantOverride("separation", 0);
         AddChild(root);
 
@@ -117,9 +118,6 @@ public partial class Hud : Control
 
         _toast = new Label { HorizontalAlignment = HorizontalAlignment.Center, Visible = false, MouseFilter = MouseFilterEnum.Ignore };
         _toast.AddThemeStyleboxOverride("normal", UiTheme.Box(new Color(0.05f, 0.06f, 0.07f, 0.92f), 10));
-        _toast.SetAnchorsPreset(LayoutPreset.CenterTop);
-        _toast.GrowHorizontal = GrowDirection.Both;
-        _toast.Position = new Vector2(0, 54);
         AddChild(_toast);
 
         _startPanel = BuildStartPanel();
@@ -287,7 +285,7 @@ public partial class Hud : Control
     {
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(440, 0) };
         panel.AddThemeStyleboxOverride("panel", UiTheme.Box(new Color(0.07f, 0.09f, 0.10f, 0.97f), 22, 8));
-        panel.SetAnchorsPreset(LayoutPreset.Center);
+        panel.SetAnchorsAndOffsetsPreset(LayoutPreset.Center);
         panel.GrowHorizontal = GrowDirection.Both;
         panel.GrowVertical = GrowDirection.Both;
         var box = new VBoxContainer();
@@ -379,7 +377,7 @@ public partial class Hud : Control
             var row = new HBoxContainer { TooltipText = def.Description + $"\n[{Loc.Evidence(def.Evidence)}]" };
             row.AddChild(new ColorRect { Color = new Color(def.ColorR, def.ColorG, def.ColorB), CustomMinimumSize = new Vector2(14, 14), SizeFlagsVertical = SizeFlags.ShrinkCenter });
             row.AddChild(new Label { Text = Loc.Name(def.NameKo, def.NameEn), SizeFlagsHorizontal = SizeFlags.ExpandFill });
-            row.AddChild(UiTheme.MutedLabel($"{100.0 * counts[b] / t.CellCount:0.0}%"));
+            row.AddChild(UiTheme.SmallLabel($"{100.0 * counts[b] / t.CellCount:0.0}%"));
             _biomeBox.AddChild(row);
         }
 

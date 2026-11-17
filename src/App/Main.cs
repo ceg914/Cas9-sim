@@ -16,7 +16,7 @@ namespace PaleoSphere.App;
 /// 앱 진입점. 데이터를 읽고 세션·3D 화면·UI를 만든 뒤, 프레임마다
 /// 입력 → 명령 → 시뮬레이션 진행 → 스냅샷 표시 순서로 돌린다.
 /// 명령줄 인자(-- 뒤): --selftest, --scenario=id, --screenshot=경로, --frames=N, --warmup-ticks=N,
-/// --autoplay=배속, --select, --tab=N, --hide-start, --benchmark=개체수, --seconds=N
+/// --autoplay=배속, --select, --tab=N, --hide-start, --benchmark=개체수, --seconds=N, --uitest
 /// </summary>
 public partial class Main : Node
 {
@@ -480,11 +480,109 @@ public partial class Main : Node
         if (_args.ContainsKey("newdialog")) _newDialog?.PopupCentered();
     }
 
+    // ---- UI 통합 점검(--uitest): 실제 입력 이벤트를 넣어 클릭 → 명령 → 시뮬레이션 → 화면 경로를 확인한다.
+    private readonly List<string> _uiFailures = new();
+    private int _uiCount;
+    private int _uiTargetId = -1;
+    private ulong _uiHash;
+
+    private void UiCheck(bool ok, string what)
+    {
+        GD.Print((ok ? "  [통과] " : "  [실패] ") + what);
+        if (!ok) _uiFailures.Add(what);
+    }
+
+    private Vector2 ScreenOf(SimulationCore sim, Vec2 p) =>
+        _camera.Camera.UnprojectPosition(new Vector3(p.X, sim.World.Terrain.HeightAt(p) + 1.5f, p.Z));
+
+    private static void Click(Vector2 at)
+    {
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true, Position = at, GlobalPosition = at });
+        Input.ParseInputEvent(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = at, GlobalPosition = at });
+    }
+
+    private static void Press(Key key) =>
+        Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
+
+    private void RunUiTest(SimulationCore sim)
+    {
+        switch (_frame)
+        {
+            case 5:
+                GD.Print("PALEOSPHERE UI 점검 시작");
+                _hud!.HideStartPanel();
+                _session!.Driver.Paused = true;
+                _uiTargetId = sim.Creatures[0].Id;
+                Vec2 p0 = sim.Creatures[0].Position;
+                _camera.FocusOn(new Vector3(p0.X, sim.World.Terrain.HeightAt(p0), p0.Z), zoomIn: true);
+                break;
+            case 30:
+                Click(ScreenOf(sim, sim.Creatures[0].Position));
+                break;
+            case 36:
+                UiCheck(_selectedId == _uiTargetId, $"클릭으로 개체 선택 (기대 #{_uiTargetId}, 실제 #{_selectedId})");
+                UiCheck(sim.GetDetails(_selectedId) != null, "선택한 개체의 상세 정보 조회");
+                Press(Key.F);
+                break;
+            case 40:
+                UiCheck(_camera.Following, "F 키로 추적 켜기");
+                Press(Key.Space);
+                break;
+            case 44:
+                UiCheck(!_session!.Driver.Paused, "Space 키로 재생");
+                _uiCount = sim.CreatureCount;
+                _hud!.SetTool(ToolMode.Place);
+                Click(ScreenOf(sim, sim.Creatures[0].Position));
+                break;
+            case 50:
+                UiCheck(sim.CreatureCount == _uiCount + _hud!.PlaceCount, $"배치 도구 클릭으로 개체 추가 ({_uiCount} → {sim.CreatureCount})");
+                _hud.SetTool(ToolMode.Disturb);
+                Click(ScreenOf(sim, sim.Creatures[0].Position));
+                break;
+            case 70:
+                int fleeing = 0;
+                foreach (PaleoSphere.Creatures.Creature c in sim.Creatures)
+                    if (c.Behavior == PaleoSphere.Creatures.BehaviorKind.Flee) fleeing++;
+                UiCheck(fleeing > 0, $"교란 도구 클릭으로 도주 유발 ({fleeing}마리)");
+                Press(Key.Escape);
+                break;
+            case 74:
+                UiCheck(_hud!.Tool == ToolMode.Select, "Esc 키로 도구 끄기");
+                _session!.Driver.Paused = true;
+                sim.ApplyPendingCommands();
+                _uiHash = sim.ComputeStateHash();
+                _uiCount = sim.CreatureCount;
+                SaveSlot("uitest");
+                break;
+            case 78:
+                UiCheck(System.IO.File.Exists(_session!.Store.PathFor("uitest")), "저장: 세이브 파일 생성");
+                sim.Enqueue(new RemoveCreatureCommand(sim.Creatures[0].Id));
+                break;
+            case 82:
+                UiCheck(sim.CreatureCount == _uiCount - 1, "삭제 명령으로 개체 수 감소");
+                LoadSlot("uitest");
+                break;
+            case 88:
+                UiCheck(sim.CreatureCount == _uiCount && sim.ComputeStateHash() == _uiHash, "불러오기: 저장 시점의 상태로 복원");
+                UiCheck(_session!.Driver.Paused, "불러온 뒤 일시정지 상태");
+                _session.Store.Delete("uitest");
+                GD.Print(_uiFailures.Count == 0 ? "UITEST PASS" : $"UITEST FAIL ({_uiFailures.Count}건)");
+                GetTree().Quit(_uiFailures.Count == 0 ? 0 : 1);
+                break;
+        }
+    }
+
     private async void RunAutomation(double delta)
     {
         _frame++;
         SimulationCore? sim = _session?.Sim;
         if (sim == null) return;
+
+        if (_args.ContainsKey("uitest"))
+        {
+            RunUiTest(sim);
+            return;
+        }
 
         if (_args.ContainsKey("benchmark") && !_args.ContainsKey("screenshot"))
         {

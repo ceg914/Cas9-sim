@@ -48,7 +48,7 @@ public static class Loc
         ["inspector.follow"] = ("추적 (F)", "Follow (F)"),
         ["inspector.remove"] = ("삭제", "Remove"),
         ["inspector.gone"] = ("선택한 개체가 더 이상 없습니다.", "The selected creature no longer exists."),
-        ["reason.score"] = ("{0} 점수 {1:0.00}이(가) 가장 높음", "{0} had the highest score ({1:0.00})"),
+        ["reason.score"] = ("가장 높은 점수: {0} {1:0.00}", "highest score: {0} {1:0.00}"),
         ["reason.dehydration"] = ("안전 규칙: 탈수 임박(수분 {0:0}%)", "Safety rule: dehydration imminent (hydration {0:0}%)"),
         ["reason.starvation"] = ("안전 규칙: 굶주림 임박(에너지 {0:0}%)", "Safety rule: starvation imminent (energy {0:0}%)"),
         ["reason.threat"] = ("안전 규칙: 위협 감지(공포 {0:0}%)", "Safety rule: threat detected (fear {0:0}%)"),

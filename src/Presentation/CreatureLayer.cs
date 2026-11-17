@@ -23,6 +23,7 @@ public partial class CreatureLayer : Node3D
         public Node3D Details = null!;
         public Node3D[] Legs = Array.Empty<Node3D>();
         public Node3D Tail = null!;
+        public MeshInstance3D Marker = null!;
         public int SpeciesIndex;
         public float Phase;
         public float HeadPitch;
@@ -55,6 +56,10 @@ public partial class CreatureLayer : Node3D
     public Vector3? SelectedPosition { get; private set; }
 
     public const float DetailDistance = 260f;
+
+    /// <summary>이 거리보다 멀면 개체 위에 위치 표식을 띄운다(멀리서도 찾을 수 있게).</summary>
+    public const float MarkerDistance = 90f;
+    private static readonly Mesh MarkerMesh = new SphereMesh { Radius = 0.5f, Height = 1f, RadialSegments = 8, Rings = 4 };
     private const double CorpseSeconds = 25.0;
 
     public override void _Ready()
@@ -98,6 +103,7 @@ public partial class CreatureLayer : Node3D
             new StandardMaterial3D { AlbedoColor = baseColor, Roughness = 0.85f },
             new StandardMaterial3D { AlbedoColor = baseColor.Darkened(0.25f), Roughness = 0.9f },
             new StandardMaterial3D { AlbedoColor = new Color(0.90f, 0.86f, 0.74f), Roughness = 0.6f },
+            new StandardMaterial3D { AlbedoColor = baseColor.Lightened(0.55f), ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded },
         };
         _materials[speciesIndex] = m;
         return m;
@@ -156,6 +162,15 @@ public partial class CreatureLayer : Node3D
             Part(horns, Cone, mat[2], new Vector3(0.04f * L, 0.08f * L, -0.14f * L), new Vector3(0.022f * L, 0.13f * L, 0.022f * L), new Vector3(-52f, 0f, 0f));
             Part(horns, Cone, mat[2], new Vector3(0f, 0.06f * L, -0.20f * L), new Vector3(0.02f * L, 0.05f * L, 0.02f * L), new Vector3(-20f, 0f, 0f));
         }
+
+        proxy.Marker = new MeshInstance3D
+        {
+            Mesh = MarkerMesh,
+            MaterialOverride = mat[3],
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+            Visible = false,
+        };
+        proxy.Root.AddChild(proxy.Marker);
 
         // 다리 넷: 어깨·엉덩이 관절에서 앞뒤로 흔든다.
         proxy.Legs = new Node3D[4];
@@ -270,8 +285,17 @@ public partial class CreatureLayer : Node3D
             p.Head.Rotation = new Vector3(-p.HeadPitch, 0f, 0f);
             p.Tail.Rotation = new Vector3(0f, Mathf.Sin(p.Phase * 0.5f) * (moving ? 0.18f : 0.06f), 0f);
 
-            bool detailed = position.DistanceSquaredTo(cameraPosition) < DetailDistance * DetailDistance;
+            float cameraDistance = position.DistanceTo(cameraPosition);
+            bool detailed = cameraDistance < DetailDistance;
             p.Details.Visible = detailed;
+            p.Marker.Visible = cameraDistance > MarkerDistance;
+            if (p.Marker.Visible)
+            {
+                // 화면에서 늘 비슷한 크기로 보이도록 거리에 비례해 키운다.
+                float markerSize = cameraDistance * 0.011f / c.BodySize;
+                p.Marker.Scale = new Vector3(markerSize, markerSize, markerSize);
+                p.Marker.Position = new Vector3(0f, 0.55f * L + markerSize, 0f);
+            }
             for (int l = 0; l < 4; l++)
             {
                 Node3D leg = p.Legs[l];

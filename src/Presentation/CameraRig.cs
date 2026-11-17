@@ -34,7 +34,7 @@ public partial class CameraRig : Node3D
         _terrain = terrain;
         float half = terrain.WorldSize * 0.5f;
         _pivot = new Vector3(half, terrain.HeightAt(new Vec2(half, half)), half);
-        _targetDistance = _distance = Mathf.Clamp(terrain.WorldSize * 0.42f, 60f, 520f);
+        _targetDistance = _distance = Mathf.Clamp(terrain.WorldSize * 0.34f, 60f, 520f);
         Following = false;
         Apply();
     }
