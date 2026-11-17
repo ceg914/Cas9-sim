@@ -1,0 +1,30 @@
+# 빌드와 자동 테스트. Godot 에디터 없이 .NET SDK만으로 돈다(Godot.NET.Sdk는 NuGet에서 받음).
+# Windows에서도 돌려, 기준 해시 테스트로 OS 간 재현성 차이를 드러낸다.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: 솔루션 빌드
+        run: dotnet build PaleoSphere.sln -nologo
+      - name: 테스트 (Debug)
+        run: dotnet test tests/PaleoSphere.Tests.csproj -nologo --no-build
+      - name: 테스트 (Release)
+        run: dotnet test tests/PaleoSphere.Tests.csproj -c Release -nologo
