@@ -11,9 +11,10 @@ public class DeterminismTests
     /// <summary>
     /// 기준 실행의 상태 해시. 시뮬레이션 규칙이나 data/ 수치를 바꾸면 달라진다.
     /// 의도한 변경이면 SimVersion.Simulation을 올리고 이 값을 갱신한다.
-    /// 다른 OS·CPU에서 이 테스트가 실패하면 부동소수점 함수 구현 차이를 뜻한다.
+    /// 이 값은 개발 환경(Linux), GitHub의 Ubuntu 러너, Windows 러너에서 같게 나온다.
+    /// 어느 한 곳에서만 실패하면 코어에 플랫폼 수학 함수(MathF.Sin 등)가 섞여 들어간 것이다. DetMath를 쓴다.
     /// </summary>
-    private const string GoldenHash = "ebf6a720cfbd898f";
+    private const string GoldenHash = "5bc33173a29ce7dc";
 
     private static SimulationCore Reference()
     {

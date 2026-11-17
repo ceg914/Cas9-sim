@@ -189,7 +189,7 @@ public sealed class Steering
                     if (distSq >= r * r) continue;
                     float dist = MathF.Sqrt(distSq);
                     // 완전히 겹치면 id로 정해지는 방향으로 민다(난수 없이 결정론 유지).
-                    Vec2 n = dist > 1e-3f ? d / dist : Vec2.FromHeading((c.Id * 2.399963f) % MathUtil.TwoPi);
+                    Vec2 n = dist > 1e-3f ? d / dist : Vec2.FromHeading(c.Id * 137 % 360 * (MathUtil.TwoPi / 360f));
                     push += n * ((r - dist) / r);
                 }
             }

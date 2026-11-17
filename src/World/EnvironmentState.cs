@@ -17,10 +17,10 @@ public struct EnvironmentState
     public static EnvironmentState Compute(SimClock clock, WorldConfig config)
     {
         float h = clock.TimeOfDayHours;
-        float sun = MathF.Sin(MathUtil.Pi * (h - 6f) / 12f);
+        float sun = DetMath.Sin(MathUtil.Pi * (h - 6f) / 12f);
         float light = sun > 0f ? sun : 0f;
-        float seasonal = config.SeasonalAmplitudeC * MathF.Sin(MathUtil.TwoPi * (clock.YearFraction - 0.125f));
-        float diurnal = config.DiurnalAmplitudeC * MathF.Cos(MathUtil.TwoPi * (h - 15f) / 24f);
+        float seasonal = config.SeasonalAmplitudeC * DetMath.Sin(MathUtil.TwoPi * (clock.YearFraction - 0.125f));
+        float diurnal = config.DiurnalAmplitudeC * DetMath.Cos(MathUtil.TwoPi * (h - 15f) / 24f);
         return new EnvironmentState
         {
             Light = light,

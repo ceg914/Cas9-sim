@@ -30,13 +30,13 @@ public readonly struct Vec2 : IEquatable<Vec2>
     public static float Dot(Vec2 a, Vec2 b) => a.X * b.X + a.Z * b.Z;
 
     /// <summary>heading(라디안) 방향의 단위 벡터. heading 0은 +X, 양의 방향은 +Z 쪽 회전.</summary>
-    public static Vec2 FromHeading(float heading) => new(MathF.Cos(heading), MathF.Sin(heading));
+    public static Vec2 FromHeading(float heading) => new(DetMath.Cos(heading), DetMath.Sin(heading));
 
-    public float Heading => MathF.Atan2(Z, X);
+    public float Heading => DetMath.Atan2(Z, X);
 
     public Vec2 Rotated(float radians)
     {
-        float c = MathF.Cos(radians), s = MathF.Sin(radians);
+        float c = DetMath.Cos(radians), s = DetMath.Sin(radians);
         return new Vec2(X * c - Z * s, X * s + Z * c);
     }
 

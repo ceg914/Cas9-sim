@@ -67,12 +67,12 @@ public static class TerrainGenerator
                 float dw = MathF.Min(waterDist[i], 400f);
                 float above = t.Height[i] - t.WaterLevel;
                 float noise = ValueNoise.Fbm(seed + 31UL, wx / 120f, wz / 120f, 3);
-                float moisture = 0.30f + 0.55f * MathF.Exp(-dw / 35f) + 0.30f * (noise - 0.5f)
+                float moisture = 0.30f + 0.55f * DetMath.Exp(-dw / 35f) + 0.30f * (noise - 0.5f)
                                  + cfg.MoistureBias - 0.012f * MathF.Max(0f, above - 4f);
                 t.Moisture[i] = MathUtil.Clamp01(moisture);
 
                 float fert = 0.55f + 0.45f * ValueNoise.Fbm(seed + 43UL, wx / 90f, wz / 90f, 2)
-                             + 0.10f * MathF.Exp(-dw / 25f);
+                             + 0.10f * DetMath.Exp(-dw / 25f);
                 t.Fertility[i] = MathUtil.Clamp01(fert);
             }
         }
