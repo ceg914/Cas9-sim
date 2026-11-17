@@ -45,6 +45,11 @@ public partial class CameraRig : Node3D
         if (zoomIn) _targetDistance = Mathf.Min(_targetDistance, 55f);
     }
 
+    public void SetDistance(float distance)
+    {
+        _targetDistance = _distance = Mathf.Clamp(distance, 6f, 2000f);
+    }
+
     public void SetFollowPoint(Vector3 point)
     {
         if (Following) _pivot = _pivot.Lerp(point, 0.25f);

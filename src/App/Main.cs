@@ -16,7 +16,7 @@ namespace PaleoSphere.App;
 /// 앱 진입점. 데이터를 읽고 세션·3D 화면·UI를 만든 뒤, 프레임마다
 /// 입력 → 명령 → 시뮬레이션 진행 → 스냅샷 표시 순서로 돌린다.
 /// 명령줄 인자(-- 뒤): --selftest, --scenario=id, --screenshot=경로, --frames=N, --warmup-ticks=N,
-/// --autoplay=배속, --select, --tab=N, --hide-start, --benchmark=개체수, --seconds=N, --uitest
+/// --autoplay=배속, --select, --zoom=거리, --hour=시각, --tab=N, --hide-start, --benchmark=개체수, --seconds=N, --uitest
 /// </summary>
 public partial class Main : Node
 {
@@ -255,7 +255,7 @@ public partial class Main : Node
         SimulationCore? sim = _session?.Sim;
         if (sim == null || e.Type != SimEventType.CreatureDied) return;
         if (sim.World.Species.TryGetIndex(e.SpeciesId, out int index))
-            _creatures.AddCorpseMarker(e.Position, sim.World.Terrain, sim.World.Species[index]);
+            _creatures.AddCorpseMarker(e.Position, sim.World.Terrain, sim.World.Species[index], index);
     }
 
     // ------------------------------------------------------------ 프레임
@@ -475,6 +475,13 @@ public partial class Main : Node
             Vec2 p = sim.Creatures[sim.CreatureCount / 2].Position;
             _camera.FocusOn(new Vector3(p.X, sim.World.Terrain.HeightAt(p), p.Z), zoomIn: true);
             _camera.Following = true;
+        }
+        if (_args.TryGetValue("zoom", out string? zoom) && float.TryParse(zoom, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float distance))
+            _camera.SetDistance(distance);
+        if (_args.TryGetValue("hour", out string? hourText) && float.TryParse(hourText, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float wantedHour))
+        {
+            // 화면 확인용: 원하는 시각이 될 때까지 진행한다(최대 하루).
+            for (int i = 0; i < sim.World.Config.TicksPerDay && Math.Abs(sim.Clock.TimeOfDayHours - wantedHour) > 0.05f; i++) sim.Step();
         }
         if (_args.ContainsKey("codex")) _codexDialog?.ShowSpecies(_data!.Species[0], _data.Biomes);
         if (_args.ContainsKey("newdialog")) _newDialog?.PopupCentered();
