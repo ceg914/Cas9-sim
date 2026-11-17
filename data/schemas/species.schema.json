@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PALEOSPHERE 종 정의",
+  "description": "data/species/*.json. 항목 묶음마다 evidence(근거 수준)를 반드시 적는다. 속도·생리·생활사 수치는 게임 내 시간 기준의 가정이다.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "scientific_name",
+    "name",
+    "diet",
+    "period",
+    "range",
+    "body",
+    "locomotion",
+    "physiology",
+    "life_history"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{1,64}$"
+    },
+    "scientific_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "name": {
+      "type": "object",
+      "required": [
+        "ko"
+      ],
+      "properties": {
+        "ko": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "en": {
+          "type": "string",
+          "maxLength": 80
+        }
+      }
+    },
+    "diet": {
+      "enum": [
+        "herbivore",
+        "carnivore",
+        "omnivore"
+      ]
+    },
+    "period": {
+      "type": "object",
+      "required": [
+        "text",
+        "evidence"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": [
+        "text",
+        "evidence"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        }
+      }
+    },
+    "body": {
+      "type": "object",
+      "required": [
+        "evidence",
+        "length_m",
+        "mass_kg"
+      ],
+      "properties": {
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        },
+        "length_m": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 60
+        },
+        "mass_kg": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 150000
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "locomotion": {
+      "type": "object",
+      "required": [
+        "evidence",
+        "walk_speed_mps",
+        "run_speed_mps"
+      ],
+      "properties": {
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        },
+        "walk_speed_mps": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 30
+        },
+        "run_speed_mps": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 40
+        },
+        "turn_rate_deg_per_sec": {
+          "type": "number",
+          "minimum": 5,
+          "maximum": 720
+        },
+        "perception_radius_m": {
+          "type": "number",
+          "minimum": 5,
+          "maximum": 300
+        }
+      }
+    },
+    "physiology": {
+      "type": "object",
+      "required": [
+        "evidence",
+        "daily_food_kg",
+        "energy_reserve_days",
+        "intake_kg_per_hour",
+        "hydration_reserve_days",
+        "drink_hours_to_full",
+        "awake_hours",
+        "rest_hours",
+        "starve_health_days",
+        "dehydration_health_days",
+        "health_regen_per_day"
+      ],
+      "properties": {
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        },
+        "daily_food_kg": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 5000
+        },
+        "energy_reserve_days": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 200
+        },
+        "intake_kg_per_hour": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 2000
+        },
+        "hydration_reserve_days": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 100
+        },
+        "drink_hours_to_full": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 24
+        },
+        "awake_hours": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "rest_hours": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 100
+        },
+        "starve_health_days": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 100
+        },
+        "dehydration_health_days": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 100
+        },
+        "health_regen_per_day": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    },
+    "life_history": {
+      "type": "object",
+      "required": [
+        "evidence",
+        "adult_age_days",
+        "max_age_days"
+      ],
+      "properties": {
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        },
+        "adult_age_days": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "max_age_days": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      }
+    },
+    "placement": {
+      "type": "object",
+      "properties": {
+        "biomes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]{1,64}$"
+          }
+        }
+      }
+    },
+    "proxy": {
+      "type": "object",
+      "required": [
+        "evidence"
+      ],
+      "properties": {
+        "evidence": {
+          "enum": [
+            "confirmed",
+            "inferred",
+            "simplified"
+          ],
+          "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+        },
+        "shape": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "color": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "facts": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "topic",
+          "text",
+          "evidence"
+        ],
+        "properties": {
+          "topic": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 600
+          },
+          "evidence": {
+            "enum": [
+              "confirmed",
+              "inferred",
+              "simplified"
+            ],
+            "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 600
+          }
+        }
+      }
+    }
+  }
+}

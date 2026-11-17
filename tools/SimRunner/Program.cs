@@ -14,7 +14,7 @@ namespace PaleoSphere.Tools;
 /// <summary>
 /// 사용법: dotnet run --project tools/SimRunner -c Release -- [--data data] [--scenario id] [--days N]
 ///         [--count N] [--seed N] [--size cells] [--csv out.csv] [--save out.psave] [--quiet]
-///         [--trace-deaths] [--trace-creature id] [--trace-every ticks]
+///         [--trace-deaths] [--trace-creature id] [--trace-every ticks] [--mem-every days]
 /// </summary>
 public static class Program
 {
@@ -28,6 +28,7 @@ public static class Program
         ulong? seed = null;
         string? csv = null;
         bool quiet = false;
+        int memEveryDays = 0;
         string? savePath = null;
         int sizeOverride = -1;
         bool traceDeaths = false;
@@ -46,6 +47,7 @@ public static class Program
                 case "--csv": csv = args[++i]; break;
                 case "--save": savePath = args[++i]; break;
                 case "--size": sizeOverride = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
+                case "--mem-every": memEveryDays = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
                 case "--quiet": quiet = true; break;
                 case "--trace-deaths": traceDeaths = true; break;
                 case "--trace-creature": traceCreature = int.Parse(args[++i], CultureInfo.InvariantCulture); break;
@@ -125,6 +127,8 @@ public static class Program
         {
             sim.Step();
             if (!quiet && sim.Clock.Tick % reportEvery == 0) PrintDay(sim);
+            if (memEveryDays > 0 && sim.Clock.Tick % ((long)memEveryDays * config.TicksPerDay) == 0)
+                Console.WriteLine($"  메모리 Day {sim.Clock.Day - 1,5}: 관리 힙 {GC.GetTotalMemory(true) / 1048576.0:0.0} MiB, 작업 집합 {Environment.WorkingSet / 1048576.0:0.0} MiB, 통계 표본 {sim.Stats.Samples.Count}, 개체 {sim.CreatureCount}");
             if (traceCreature > 0 && sim.Clock.Tick % traceEvery == 0 && sim.TryGetCreature(traceCreature, out Creature? tc) && tc != null)
             {
                 var tt = sim.World.Terrain;

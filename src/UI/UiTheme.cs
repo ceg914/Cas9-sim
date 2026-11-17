@@ -77,7 +77,15 @@ public static class UiTheme
         theme.SetStylebox("focus", "LineEdit", Box(new Color(0.05f, 0.06f, 0.07f, 1f), 6));
         theme.SetStylebox("panel", "PopupMenu", Box(PanelLight));
         theme.SetStylebox("panel", "AcceptDialog", Box(Panel, 12));
-        theme.SetStylebox("embedded_border", "Window", Box(Panel, 12));
+        // 창 제목 줄에도 배경을 깔아 3D 화면 위에서 제목이 읽히게 한다.
+        StyleBoxFlat windowBorder = Box(Panel, 12);
+        windowBorder.ExpandMarginTop = 34;
+        theme.SetStylebox("embedded_border", "Window", windowBorder);
+        theme.SetStylebox("embedded_unfocused_border", "Window", windowBorder);
+        theme.SetColor("title_color", "Window", Text);
+        theme.SetConstant("title_height", "Window", 34);
+        foreach (string state in new[] { "normal", "pressed", "hover", "hover_pressed", "focus", "disabled" })
+            theme.SetStylebox(state, "CheckBox", new StyleBoxEmpty());
         theme.SetStylebox("panel", "ItemList", Box(new Color(0.05f, 0.06f, 0.07f, 1f), 4));
         return theme;
     }

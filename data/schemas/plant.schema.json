@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PALEOSPHERE 식생 층 정의",
+  "description": "data/plants/*.json. 온도는 min < optimal_low ≤ optimal_high < max, 수분은 min < optimal 순서여야 한다.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "evidence",
+    "growth_rate_per_day",
+    "seed_fraction",
+    "dieback_rate_per_day",
+    "residual_fraction",
+    "min_moisture",
+    "optimal_moisture",
+    "min_temperature_c",
+    "optimal_low_c",
+    "optimal_high_c",
+    "max_temperature_c"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{1,64}$"
+    },
+    "name": {
+      "type": "object",
+      "required": [
+        "ko"
+      ],
+      "properties": {
+        "ko": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "en": {
+          "type": "string",
+          "maxLength": 80
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 600
+    },
+    "evidence": {
+      "enum": [
+        "confirmed",
+        "inferred",
+        "simplified"
+      ],
+      "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+    },
+    "growth_rate_per_day": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "seed_fraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.5
+    },
+    "dieback_rate_per_day": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "residual_fraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.9
+    },
+    "min_moisture": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "optimal_moisture": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "min_temperature_c": {
+      "type": "number",
+      "minimum": -40,
+      "maximum": 60
+    },
+    "optimal_low_c": {
+      "type": "number",
+      "minimum": -40,
+      "maximum": 60
+    },
+    "optimal_high_c": {
+      "type": "number",
+      "minimum": -40,
+      "maximum": 60
+    },
+    "max_temperature_c": {
+      "type": "number",
+      "minimum": -40,
+      "maximum": 70
+    }
+  }
+}

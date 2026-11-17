@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PALEOSPHERE 생물군계 정의",
+  "description": "data/biomes/*.json. 허용 범위는 src/Modding/DefinitionLoaders.cs의 검사와 같다. 파일 한 개는 256 KiB, 중첩 깊이 16까지.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "evidence",
+    "vegetation_capacity_kg_m2"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]{1,64}$"
+    },
+    "name": {
+      "type": "object",
+      "required": [
+        "ko"
+      ],
+      "properties": {
+        "ko": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "en": {
+          "type": "string",
+          "maxLength": 80
+        }
+      }
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 600
+    },
+    "evidence": {
+      "enum": [
+        "confirmed",
+        "inferred",
+        "simplified"
+      ],
+      "description": "confirmed = 화석으로 확인, inferred = 학술적 추정, simplified = 게임적 단순화"
+    },
+    "vegetation_capacity_kg_m2": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20
+    },
+    "growth_factor": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "move_speed_factor": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 2
+    },
+    "color": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "bare_color": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    }
+  }
+}
